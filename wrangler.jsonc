@@ -1,0 +1,10 @@
+// Cloudflare deploy settings: upload the static build in dist/ as-is.
+// Having this file stops Cloudflare from auto-adding its server adapter.
+{
+  "name": "contrast-index",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  }
+}

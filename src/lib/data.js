@@ -1,16 +1,16 @@
 // Loads the product CSVs (the source of truth in /data) and normalizes
 // the free-text spec cells into fields the filters and tables can use.
 // Raw text is always kept so pages show exactly what the brand published.
-import fs from 'node:fs';
-import path from 'node:path';
 import { parse } from 'csv-parse/sync';
+// Imported as text at build time, so loading works in any build runtime.
+import coldPlungesCsv from '../../data/cold-plunges.csv?raw';
+import saunasCsv from '../../data/saunas.csv?raw';
 
 const NP = 'Not published';
-const root = process.cwd();
+const CSV = { 'cold-plunges.csv': coldPlungesCsv, 'saunas.csv': saunasCsv };
 
 function readCsv(file) {
-  const text = fs.readFileSync(path.join(root, 'data', file), 'utf8');
-  return parse(text, { columns: true, skip_empty_lines: true, trim: true });
+  return parse(CSV[file], { columns: true, skip_empty_lines: true, trim: true });
 }
 
 export function slugify(s) {
