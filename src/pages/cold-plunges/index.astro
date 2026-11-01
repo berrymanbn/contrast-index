@@ -1,0 +1,98 @@
+---
+import Base from '../../layouts/Base.astro';
+import TempScale from '../../components/TempScale.astro';
+import FinderScript from '../../components/FinderScript.astro';
+import { getColdPlunges, usd } from '../../lib/data.js';
+import { plungePower, priceBand, fmtHp } from '../../lib/format.js';
+
+const items = getColdPlunges().sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9));
+const styles = [...new Set(items.map((p) => p.style))];
+const slugOf = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+---
+<Base title="Cold Plunge Finder: Compare Specs and Prices" description={`Compare ${items.length} home cold plunges by coldest temperature, chiller horsepower, tub capacity, electrical needs and price. Specs sourced from each manufacturer.`}>
+  <div class="wrap page-head">
+    <h1>Cold plunge finder</h1>
+    <p class="lead">{items.length} cold plunges, filtered by what decides whether one works in your home: how cold it gets, how much water it holds, what outlet it needs and what it costs.</p>
+  </div>
+  <section class="wrap" data-finder>
+    <form class="filters" onsubmit="return false">
+      <label>Tub style
+        <select data-filter="style">
+          <option value="any">Any style</option>
+          {styles.map((s) => <option value={slugOf(s)}>{s}</option>)}
+        </select>
+      </label>
+      <label>Coldest temperature
+        <select data-filter="low" data-mode="max">
+          <option value="any">Any</option>
+          <option value="32">32°F or colder</option>
+          <option value="37">37°F or colder</option>
+          <option value="39">39°F or colder</option>
+        </select>
+      </label>
+      <label>Power
+        <select data-filter="power">
+          <option value="any">Any</option>
+          <option value="120">Runs on 120V</option>
+          <option value="unknown">Voltage not published</option>
+        </select>
+      </label>
+      <label>Price
+        <select data-filter="band">
+          <option value="any">Any price</option>
+          <option value="under-2k">Under $2,000</option>
+          <option value="2k-5k">$2,000 to $5,000</option>
+          <option value="5k-10k">$5,000 to $10,000</option>
+          <option value="over-10k">Over $10,000</option>
+        </select>
+      </label>
+      <label>Sort by
+        <select data-sort>
+          <option value="price:asc">Price, low to high</option>
+          <option value="price:desc">Price, high to low</option>
+          <option value="low:asc">Coldest first</option>
+          <option value="gallons:desc">Largest tub first</option>
+        </select>
+      </label>
+      <p class="count" data-count aria-live="polite"></p>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Model</th>
+            <th scope="col" class="num">Price</th>
+            <th scope="col" class="num">Coldest</th>
+            <th scope="col">Range</th>
+            <th scope="col" class="num">Chiller</th>
+            <th scope="col" class="num">Capacity</th>
+            <th scope="col">Power</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((p) => (
+            <tr
+              data-style={slugOf(p.style)}
+              data-low={p.low ?? ''}
+              data-power={p.volts === 120 || p.volts === 'both' ? '120' : p.hasChiller ? 'unknown' : 'none'}
+              data-band={priceBand(p.price)}
+              data-price={p.price ?? ''}
+              data-gallons={p.gallons ?? ''}
+            >
+              <td><a class="model" href={`/cold-plunges/${p.slug}/`}>{p.name}</a><span class="sub">{p.style}</span></td>
+              <td class="num">{p.price != null ? usd(p.price) : <span class="np">Not published</span>}</td>
+              <td class="num">{p.low != null ? `${p.low}°F` : <span class="np">{p.hasChiller ? 'Not published' : 'No chiller'}</span>}</td>
+              <td><div class="mini-scale"><TempScale marks={p.low != null ? [{ low: p.low, high: p.high ?? p.low, kind: 'cold' }] : []} /></div></td>
+              <td class="num">{fmtHp(p.hp) ?? <span class="np">{p.hasChiller ? 'Not published' : 'None'}</span>}</td>
+              <td class="num">{p.gallons != null ? `${p.gallons} gal` : <span class="np">Not published</span>}</td>
+              <td>{plungePower(p) === 'Not published' ? <span class="np">Not published</span> : plungePower(p)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="empty" data-empty hidden>No cold plunges match those filters. Try widening the price or temperature range.</p>
+    </div>
+    <p class="source-note">Prices are each brand's listed price on the date checked and change often. Open a model to see its full specs and source.</p>
+  </section>
+  <FinderScript />
+</Base>

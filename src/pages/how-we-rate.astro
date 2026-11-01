@@ -1,0 +1,33 @@
+---
+import Base from '../layouts/Base.astro';
+import { getAll } from '../lib/data.js';
+const n = getAll().length;
+---
+<Base title="How We Rate: Sources, Methods and Affiliate Disclosure" description="Where The Contrast Index gets its specs, how we handle missing or conflicting data, and how affiliate links work on this site.">
+  <div class="wrap page-head">
+    <h1>How we rate</h1>
+    <p class="lead">The Contrast Index compares saunas and cold plunges on published specs. Here's where those specs come from and what we do when they're missing or don't agree.</p>
+  </div>
+  <div class="wrap prose">
+    <h2>Where the specs come from</h2>
+    <p>Every spec for the {n} models in the index comes from the manufacturer's own website, spec sheet or manual. Each model page links to its source and shows the date we checked it. We don't copy specs from retailers or other review sites.</p>
+
+    <h2>When a spec is missing</h2>
+    <p>If a brand doesn't publish a spec, we mark it "Not published." We never estimate, average or fill gaps from other sources. A missing spec is useful to know: if a brand won't say how much water its chiller can cool, ask before you buy.</p>
+
+    <h2>When a brand's own pages disagree</h2>
+    <p>Sometimes a brand lists two different prices, weights or warranties on its own site. We record what each page says in the model's "Notes on the source" section and don't pick one.</p>
+
+    <h2>Prices</h2>
+    <p>Prices are what the brand listed on the date we checked. Sauna and cold plunge brands run frequent sales, so the price you see at checkout may differ. We recheck prices monthly.</p>
+
+    <h2>Scores</h2>
+    <p>Right now the index compares specs; it doesn't give products scores. When we add ratings, this page will explain exactly how they're calculated, before any score goes live.</p>
+
+    <h2>Affiliate links</h2>
+    <p>Some links to brands may be affiliate links, which means we may earn a commission if you buy, at no extra cost to you. Commission rates never affect which products we include, the order they appear in, or what we say about them. Products from brands with no affiliate program are listed the same way as everyone else.</p>
+
+    <h2>Corrections</h2>
+    <p>If a spec is wrong or out of date, tell us and include a link to the manufacturer's page. We'll check it and update the date.</p>
+  </div>
+</Base>

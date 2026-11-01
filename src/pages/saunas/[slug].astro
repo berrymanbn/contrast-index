@@ -1,0 +1,14 @@
+---
+import ProductPage from '../../components/ProductPage.astro';
+import { getAll, getSaunas } from '../../lib/data.js';
+
+export function getStaticPaths() {
+  const all = getAll();
+  return getSaunas().map((p) => ({
+    params: { slug: p.slug },
+    props: { p, siblings: all.filter((s) => s.brand === p.brand && s.slug !== p.slug) },
+  }));
+}
+const { p, siblings } = Astro.props;
+---
+<ProductPage p={p} siblings={siblings} />

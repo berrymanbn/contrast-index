@@ -1,0 +1,90 @@
+---
+import Base from '../../layouts/Base.astro';
+import TempScale from '../../components/TempScale.astro';
+import { getSaunas, usd } from '../../lib/data.js';
+
+const saunas = getSaunas();
+const group = (heat) => {
+  const g = saunas.filter((s) => s.heat === heat);
+  const nums = (k) => g.map((s) => s[k]).filter((n) => n != null);
+  const count = (fn) => g.filter(fn).length;
+  return {
+    list: g,
+    n: g.length,
+    price: [Math.min(...nums('price')), Math.max(...nums('price'))],
+    temp: [Math.min(...nums('maxTemp')), Math.max(...nums('maxTemp'))],
+    watts: [Math.min(...nums('watts')), Math.max(...nums('watts'))],
+    standard: count((s) => s.standardOutlet),
+    dedicated120: count((s) => s.power === '120V dedicated circuit'),
+    v240: count((s) => /240V|Hardwired/.test(s.power)),
+    indoor: count((s) => s.placement === 'Indoor'),
+    outdoor: count((s) => s.placement === 'Outdoor'),
+  };
+};
+const ir = group('Infrared');
+const tr = group('Traditional');
+const kw = (w) => `${(w / 1000).toFixed(1).replace(/\.0$/, '')} kW`;
+const marks = [
+  ...ir.list.filter((s) => s.maxTemp).map((s) => ({ high: s.maxTemp, kind: 'heat', label: `${s.name} (infrared): ${s.maxTemp}°F` })),
+  ...tr.list.filter((s) => s.maxTemp).map((s) => ({ high: s.maxTemp, kind: 'heat', label: `${s.name} (traditional): ${s.maxTemp}°F` })),
+];
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Infrared vs traditional sauna',
+  dateModified: '2026-11-01',
+  author: { '@type': 'Organization', name: 'The Contrast Index' },
+};
+---
+<Base title="Infrared vs Traditional Sauna: Temperature, Power and Price Compared" description={`Infrared vs traditional saunas compared on real specs: max temperature, electrical needs, heat-up time, placement and price, from ${saunas.length} home saunas.`} schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/guides/">Guides</a></p>
+    <h1>Infrared vs traditional sauna</h1>
+    <p class="lead">Traditional saunas heat the air, which then heats you. Infrared saunas use heating panels that warm your body more directly, so the room runs cooler. That one difference drives most of the trade-offs below, which come from the {saunas.length} saunas in our index.</p>
+  </div>
+  <div class="wrap">
+    <TempScale marks={marks} caption={`Max rated temperature: infrared models top out at ${ir.temp[0]}–${ir.temp[1]}°F; traditional models at ${tr.temp[0]}–${tr.temp[1]}°F.`} />
+
+    <h2>Side by side</h2>
+    <div class="table-wrap spec-table">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col">Infrared ({ir.n} models)</th><th scope="col">Traditional ({tr.n} models)</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">How it heats</th><td>Carbon or halogen panels aimed at your body</td><td>An electric (or wood) heater warms the air and a bed of stones</td></tr>
+          <tr><th scope="row">Max rated temperature</th><td>{ir.temp[0]}–{ir.temp[1]}°F</td><td>{tr.temp[0]}–{tr.temp[1]}°F</td></tr>
+          <tr><th scope="row">Heater power</th><td>{kw(ir.watts[0])} to {kw(ir.watts[1])}</td><td>{kw(tr.watts[0])} to {kw(tr.watts[1])}</td></tr>
+          <tr><th scope="row">Plugs into a standard outlet</th><td>{ir.standard} of {ir.n}</td><td>{tr.standard} of {tr.n}</td></tr>
+          <tr><th scope="row">Needs 240V or hardwiring</th><td>{ir.v240} of {ir.n}</td><td>All {tr.n}</td></tr>
+          <tr><th scope="row">Indoor / outdoor models</th><td>{ir.indoor} indoor, {ir.outdoor} outdoor</td><td>{tr.indoor} indoor, {tr.outdoor} outdoor</td></tr>
+          <tr><th scope="row">Price range</th><td>{usd(ir.price[0])} to {usd(ir.price[1])}</td><td>{usd(tr.price[0])} to {usd(tr.price[1])}</td></tr>
+          <tr><th scope="row">Steam (water on stones)</th><td>No</td><td>Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <h2>Temperature</h2>
+      <p>Traditional saunas in the index are rated {tr.temp[0]}–{tr.temp[1]}°F. Infrared models are rated {ir.temp[0]}–{ir.temp[1]}°F, and the hotter end is the outdoor infrared cabins. If you want a hot, dry room with steam when you pour water on the stones, that's a traditional sauna. If you'd rather sit in a gentler room for longer, infrared is built for that.</p>
+
+      <h2>Power and installation</h2>
+      <p>This is the biggest practical difference. {ir.standard} infrared saunas in the index plug into an ordinary 120V household outlet, and {ir.dedicated120} more run on 120V but need a dedicated 20A or 30A circuit. Every traditional sauna in the index runs on a 240V circuit or must be hardwired by an electrician. A traditional heater draws {kw(tr.watts[0])} to {kw(tr.watts[1])}, which a household outlet can't supply.</p>
+      <p>See which models fit your panel in <a href="/guides/sauna-electrical-requirements/">sauna electrical requirements</a>.</p>
+
+      <h2>Heat-up time</h2>
+      <p>Peak Saunas says its infrared models feel warm in 15–20 minutes and reach full temperature in 45–60 minutes. Almost Heaven quotes 45–60 minutes for its electric barrel saunas, and SaunaBox says the Forge reaches 170°F in about 25 minutes. Most brands don't publish heat-up time at all, and every figure depends on how cold the room or yard is.</p>
+
+      <h2>Placement</h2>
+      <p>Most infrared saunas in the index are indoor cabins: {ir.indoor} indoor against {ir.outdoor} outdoor. Peak says not to put its indoor models outside, even on a covered patio. All {tr.n} traditional saunas in the index are outdoor models such as barrels and cabins, though indoor traditional rooms and kits exist.</p>
+
+      <h2>Which to choose</h2>
+      <ul>
+        <li><strong>Choose infrared</strong> if you need it indoors, can't add a 240V circuit, or prefer lower heat.</li>
+        <li><strong>Choose traditional</strong> if you want the hottest room and steam, have outdoor space, and can budget for an electrician.</li>
+      </ul>
+      <p>Compare every model in the <a href="/saunas/">sauna finder</a>, filtered by heat type.</p>
+    </div>
+    <div class="callout heat">
+      <p>Our index has far more infrared models ({ir.n}) than traditional ones ({tr.n}) right now, so the traditional ranges are based on a small set. We're adding more traditional saunas.</p>
+    </div>
+  </div>
+</Base>

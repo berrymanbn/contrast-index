@@ -1,0 +1,18 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getBrands } from '../../lib/data.js';
+const brands = getBrands();
+---
+<Base title="Sauna and Cold Plunge Brands" description={`${brands.length} sauna and cold plunge brands in The Contrast Index, with every model's specs and price.`}>
+  <div class="wrap page-head">
+    <h1>Brands</h1>
+    <p class="lead">{brands.length} brands in the index.</p>
+  </div>
+  <div class="wrap">
+    <ul class="guide-list">
+      {brands.map((b) => (
+        <li><a href={`/brands/${b.slug}/`}>{b.name}</a><p>{b.products.length} {b.products.length === 1 ? 'model' : 'models'}</p></li>
+      ))}
+    </ul>
+  </div>
+</Base>

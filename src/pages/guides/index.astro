@@ -1,0 +1,19 @@
+---
+import Base from '../../layouts/Base.astro';
+const guides = [
+  { href: '/cold-plunges/chillers/', title: 'Cold plunge chillers compared', text: 'Horsepower, coldest temperature and tub size for every chiller system in the index.' },
+  { href: '/guides/infrared-vs-traditional-sauna/', title: 'Infrared vs traditional sauna', text: 'Temperature, power, heat-up time and price, side by side.' },
+  { href: '/guides/sauna-electrical-requirements/', title: 'Sauna electrical requirements', text: 'Which saunas plug into a standard outlet, and which need a new circuit.' },
+];
+---
+<Base title="Sauna and Cold Plunge Buying Guides" description="Buying guides built from manufacturer specs: chiller comparisons, infrared vs traditional saunas, and electrical requirements.">
+  <div class="wrap page-head">
+    <h1>Guides</h1>
+    <p class="lead">Each guide is built from the specs in the index, so the numbers update when the data does.</p>
+  </div>
+  <div class="wrap">
+    <ul class="guide-list">
+      {guides.map((g) => <li><a href={g.href}>{g.title}</a><p>{g.text}</p></li>)}
+    </ul>
+  </div>
+</Base>

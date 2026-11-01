@@ -1,0 +1,105 @@
+---
+import Base from '../../layouts/Base.astro';
+import FinderScript from '../../components/FinderScript.astro';
+import { getSaunas, usd } from '../../lib/data.js';
+import { priceBand } from '../../lib/format.js';
+
+const items = getSaunas().sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9));
+const powerKey = (s) =>
+  s.standardOutlet ? 'standard' : s.power === '120V dedicated circuit' ? 'dedicated120' : /240V|Hardwired/.test(s.power) ? 'v240' : 'unknown';
+---
+<Base title="Home Sauna Finder: Compare Specs and Prices" description={`Compare ${items.length} home saunas by heat type, size, power requirements, max temperature and price. Specs sourced from each manufacturer.`}>
+  <div class="wrap page-head">
+    <h1>Sauna finder</h1>
+    <p class="lead">{items.length} home saunas. Start with power and placement: they rule out more models than price does.</p>
+  </div>
+  <section class="wrap" data-finder>
+    <form class="filters" onsubmit="return false">
+      <label>Heat type
+        <select data-filter="heat">
+          <option value="any">Infrared or traditional</option>
+          <option value="infrared">Infrared</option>
+          <option value="traditional">Traditional</option>
+        </select>
+      </label>
+      <label>Placement
+        <select data-filter="placement">
+          <option value="any">Indoor or outdoor</option>
+          <option value="indoor">Indoor</option>
+          <option value="outdoor">Outdoor</option>
+        </select>
+      </label>
+      <label>Power
+        <select data-filter="power">
+          <option value="any">Any</option>
+          <option value="standard">Standard 120V outlet</option>
+          <option value="dedicated120">120V dedicated circuit</option>
+          <option value="v240">240V circuit</option>
+        </select>
+      </label>
+      <label>Seats at least
+        <select data-filter="cap" data-mode="min">
+          <option value="any">Any size</option>
+          <option value="1">1 person</option>
+          <option value="2">2 people</option>
+          <option value="3">3 people</option>
+          <option value="4">4 or more</option>
+        </select>
+      </label>
+      <label>Price
+        <select data-filter="band">
+          <option value="any">Any price</option>
+          <option value="2k-5k">$2,000 to $5,000</option>
+          <option value="5k-10k">$5,000 to $10,000</option>
+          <option value="over-10k">Over $10,000</option>
+        </select>
+      </label>
+      <label>Sort by
+        <select data-sort>
+          <option value="price:asc">Price, low to high</option>
+          <option value="price:desc">Price, high to low</option>
+          <option value="temp:desc">Hottest first</option>
+          <option value="cap:desc">Most seats first</option>
+        </select>
+      </label>
+      <p class="count" data-count aria-live="polite"></p>
+    </form>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Model</th>
+            <th scope="col" class="num">Price</th>
+            <th scope="col" class="num">Seats</th>
+            <th scope="col" class="num">Max temp</th>
+            <th scope="col">Power</th>
+            <th scope="col">Placement</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((s) => (
+            <tr
+              data-heat={s.heat.toLowerCase()}
+              data-placement={s.placement.toLowerCase()}
+              data-power={powerKey(s)}
+              data-cap={s.capMax ?? ''}
+              data-band={priceBand(s.price)}
+              data-price={s.price ?? ''}
+              data-temp={s.maxTemp ?? ''}
+            >
+              <td><a class="model" href={`/saunas/${s.slug}/`}>{s.name}</a><span class="sub">{s.type}</span></td>
+              <td class="num">{s.price != null ? usd(s.price) : <span class="np">Not published</span>}</td>
+              <td class="num">{s.capMin === s.capMax ? s.capMin : `${s.capMin}–${s.capMax}`}</td>
+              <td class="num">{s.maxTemp != null ? `${s.maxTemp}°F` : <span class="np">Not published</span>}</td>
+              <td>{s.power}{s.amps && !s.hardwired ? <span class="sub">{s.amps}A{s.standardOutlet ? '' : ' circuit'}</span> : null}</td>
+              <td>{s.placement}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p class="empty" data-empty hidden>No saunas match those filters. Try a different power or placement option.</p>
+    </div>
+    <p class="source-note">Not sure what your electrical panel supports? Read <a href="/guides/sauna-electrical-requirements/">sauna electrical requirements</a> before you filter by power.</p>
+  </section>
+  <FinderScript />
+</Base>

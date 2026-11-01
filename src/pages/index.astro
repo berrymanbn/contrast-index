@@ -1,0 +1,64 @@
+---
+import Base from '../layouts/Base.astro';
+import TempScale from '../components/TempScale.astro';
+import { getColdPlunges, getSaunas, usd } from '../lib/data.js';
+
+const plunges = getColdPlunges();
+const saunas = getSaunas();
+const marks = [
+  ...plunges.filter((p) => p.low != null).map((p) => ({ low: p.low, kind: 'cold', label: `${p.name}: ${p.low}°F` })),
+  ...saunas.filter((s) => s.maxTemp != null).map((s) => ({ high: s.maxTemp, kind: 'heat', label: `${s.name}: up to ${s.maxTemp}°F` })),
+];
+const range = (arr) => {
+  const v = arr.map((p) => p.price).filter((n) => n != null);
+  return `${usd(Math.min(...v))} to ${usd(Math.max(...v))}`;
+};
+const plugIn = saunas.filter((s) => s.standardOutlet).length;
+const coldest = Math.min(...plunges.map((p) => p.low).filter((n) => n != null));
+const brands = new Set([...plunges, ...saunas].map((p) => p.brand)).size;
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'The Contrast Index',
+  url: Astro.site?.href,
+  description: 'Sauna and cold plunge specs, sourced from each manufacturer and compared.',
+};
+---
+<Base title="The Contrast Index: Sauna & Cold Plunge Specs, Compared" description="Compare home saunas and cold plunges on the specs that decide fit: power, size, temperature and price. Every spec is sourced from the manufacturer and dated." schema={schema}>
+  <section class="wrap hero">
+    <h1>Every sauna and cold plunge spec, sourced and compared.</h1>
+    <p class="lead">{plunges.length + saunas.length} models from {brands} brands, placed on one temperature scale. Each spec comes from the manufacturer's own page, with the date we checked it.</p>
+    <TempScale size="hero" marks={marks} caption={`Coldest rated plunge temperature (blue) and hottest rated sauna temperature (amber) for every model with a published figure.`} />
+
+    <div class="hero-spread">
+      <div class="side side-cold">
+        <h2>Cold plunges</h2>
+        <ul>
+          <li>{plunges.length} models, {range(plunges)}</li>
+          <li>The coldest is rated to {coldest}°F</li>
+          <li>Compare chiller power, capacity and electrical needs</li>
+        </ul>
+        <a class="btn btn-cold" href="/cold-plunges/">Compare cold plunges</a>
+      </div>
+      <div class="side side-heat">
+        <h2>Saunas</h2>
+        <ul>
+          <li>{saunas.length} models, {range(saunas)}</li>
+          <li>{plugIn} plug into a standard 120V outlet</li>
+          <li>Filter by infrared or traditional, indoor or outdoor</li>
+        </ul>
+        <a class="btn btn-heat" href="/saunas/">Compare saunas</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <h2>Guides</h2>
+    <ul class="guide-list">
+      <li><a href="/cold-plunges/chillers/">Cold plunge chillers compared</a><p>Horsepower, coldest temperature and tub size for every chiller system in the index.</p></li>
+      <li><a href="/guides/infrared-vs-traditional-sauna/">Infrared vs traditional sauna</a><p>Temperature, power, heat-up time and price, side by side.</p></li>
+      <li><a href="/guides/sauna-electrical-requirements/">Sauna electrical requirements</a><p>Which saunas plug into a standard outlet, and which need a new circuit.</p></li>
+    </ul>
+  </section>
+</Base>

@@ -1,0 +1,106 @@
+---
+import Base from '../../layouts/Base.astro';
+import TempScale from '../../components/TempScale.astro';
+import { getColdPlunges, usd } from '../../lib/data.js';
+import { plungePower, fmtHp } from '../../lib/format.js';
+
+const all = getColdPlunges();
+const withChiller = all.filter((p) => p.hasChiller && p.style !== 'Hot + cold combo');
+const rows = [...withChiller].sort((a, b) => (a.low ?? 99) - (b.low ?? 99) || (b.hp ?? 0) - (a.hp ?? 0));
+const hpKnown = withChiller.filter((p) => p.hp != null);
+const hpMissing = withChiller.filter((p) => p.hp == null);
+const iceMaking = withChiller.filter((p) => p.low != null && p.low <= 32);
+const on120 = withChiller.filter((p) => p.volts === 120);
+const heats = withChiller.filter((p) => p.high != null);
+const prices = withChiller.map((p) => p.price).filter((n) => n != null);
+const galPerHp = (p) => (p.hp && p.gallons ? Math.round(p.gallons / p.hp) : null);
+const byLow = (t) => withChiller.filter((p) => p.low === t).map((p) => p.name);
+const marks = withChiller.filter((p) => p.low != null).map((p) => ({ low: p.low, kind: 'cold', label: `${p.name}: ${p.low}°F` }));
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Cold plunge chillers compared',
+  dateModified: '2026-11-01',
+  author: { '@type': 'Organization', name: 'The Contrast Index' },
+};
+---
+<Base title="Cold Plunge Chillers Compared: Horsepower, Temperature and Tub Size" description={`${withChiller.length} cold plunge chiller systems compared on horsepower, coldest temperature, tub capacity, electrical needs and price. Specs sourced from each manufacturer.`} schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/cold-plunges/">Cold plunges</a></p>
+    <h1>Cold plunge chillers compared</h1>
+    <p class="lead">The chiller decides how cold your plunge gets, how fast it recovers after you get out, and what outlet you need. Here are {withChiller.length} chiller systems side by side, priced from {usd(Math.min(...prices))} to {usd(Math.max(...prices))}.</p>
+  </div>
+
+  <div class="wrap">
+    <div class="stat-row">
+      <div><strong>{iceMaking.length}</strong>rated to 32°F or colder</div>
+      <div><strong>{on120.length}</strong>run on 120V household power</div>
+      <div><strong>{heats.length}</strong>can also heat the water</div>
+      <div><strong>{hpMissing.length}</strong>don't publish chiller horsepower</div>
+    </div>
+
+    <TempScale marks={marks} caption="Coldest rated temperature for each chiller system with a published figure." />
+
+    <h2>Every chiller system, coldest first</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Model</th>
+            <th scope="col" class="num">Coldest</th>
+            <th scope="col" class="num">Heats to</th>
+            <th scope="col" class="num">Chiller</th>
+            <th scope="col" class="num">Tub capacity</th>
+            <th scope="col" class="num">Gallons per HP</th>
+            <th scope="col">Power</th>
+            <th scope="col" class="num">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((p) => (
+            <tr>
+              <td><a class="model" href={`/cold-plunges/${p.slug}/`}>{p.name}</a><span class="sub">{p.style}</span></td>
+              <td class="num">{p.low != null ? `${p.low}°F` : <span class="np">Not published</span>}</td>
+              <td class="num">{p.high != null ? `${p.high}°F` : <span class="np">{/cooling only/i.test(p.raw['Highest temp (°F)']) ? 'Cooling only' : 'Not published'}</span>}</td>
+              <td class="num">{fmtHp(p.hp) ?? <span class="np">Not published</span>}</td>
+              <td class="num">{p.gallons != null ? `${p.gallons} gal` : <span class="np">Not published</span>}</td>
+              <td class="num">{galPerHp(p) ?? <span class="np">n/a</span>}</td>
+              <td>{plungePower(p) === 'Not published' ? <span class="np">Not published</span> : plungePower(p)}</td>
+              <td class="num">{p.price != null ? usd(p.price) : <span class="np">Not published</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="source-note">Gallons per HP divides the tub's listed capacity by chiller horsepower. Lower means more cooling power for the water you're holding. It's a rough comparison, since insulation, room temperature and fill level all change real performance.</p>
+
+    <div class="prose">
+      <h2>How cold each system gets</h2>
+      <p>Brands rate their chillers at a handful of common floors:</p>
+      <ul>
+        {byLow(28).length > 0 && <li><strong>28°F:</strong> {byLow(28).join(', ')}. This is the coldest rating in the index.</li>}
+        {byLow(32).length > 0 && <li><strong>32°F:</strong> {byLow(32).join(', ')}. At this point the water can start to form ice, which several brands advertise as ice-making.</li>}
+        {byLow(36).length > 0 && <li><strong>36°F:</strong> {byLow(36).join(', ')}.</li>}
+        {byLow(37).length > 0 && <li><strong>37°F:</strong> {byLow(37).join(', ')}.</li>}
+        {byLow(39).length > 0 && <li><strong>39°F:</strong> {byLow(39).join(', ')}.</li>}
+      </ul>
+      <p>A rating is the coldest the brand says the system reaches, usually in mild room temperatures. A chiller in a hot garage or in direct sun works harder and may not hold its rated floor.</p>
+
+      <h2>Check the chiller against the tub size</h2>
+      <p>Horsepower only means something next to the amount of water it has to cool. Plunge Chill publishes both numbers, and some of its bundles pair a tub with more water than its own chiller rating covers:</p>
+      <ul>
+        <li>Its 1 HP chiller is rated for up to 110 gallons, but the <a href="/cold-plunges/plunge-chill-1hp-chiller-tub-pro/">1HP Chiller + Tub (Pro)</a> bundle comes with a 200-gallon tub.</li>
+        <li>Its 1/3 HP chiller's cooling times are given for 66 gallons, but the <a href="/cold-plunges/plunge-chill-chiller-tub-xxl-1-3-hp/">XXL bundle</a> uses a 120-gallon tub.</li>
+      </ul>
+      <p>You don't have to fill a tub to the top, but expect slower cooling if you do. When a brand doesn't publish what its chiller is rated to cool, ask before you buy.</p>
+
+      <h2>Electrical needs</h2>
+      <p>Every chiller in the index that publishes its power runs on 120V. Several brands, including Plunge, Sun Home, Salus, Aquavoss and Polar Monkeys, say the chiller needs a dedicated 15A circuit, which means no other appliances on that breaker. Lower-power chillers like Desert Plunge's 1/4 HP draw 6.5A from a standard outlet. Plunge Chill doesn't publish its chillers' voltage or amperage. Read more in <a href="/guides/sauna-electrical-requirements/">our electrical requirements guide</a>.</p>
+
+      <h2>What the brands don't publish</h2>
+      <p>{hpMissing.length} of the {withChiller.length} systems don't list chiller horsepower: {hpMissing.map((p) => p.name).join(', ')}. Missing specs are marked "Not published" throughout the index. We don't fill them in with estimates.</p>
+    </div>
+    <p class="source-note">Specs checked November 1, 2026, from each manufacturer's own pages. Every model page links to its source.</p>
+  </div>
+</Base>

@@ -1,0 +1,98 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getSaunas, getColdPlunges, usd } from '../../lib/data.js';
+import { plungePower } from '../../lib/format.js';
+
+const saunas = getSaunas();
+const tiers = [
+  {
+    key: 'standard',
+    title: 'Plugs into a standard 120V outlet',
+    body: 'These use the ordinary household plug (NEMA 5-15). The brands still point you to the owner\'s manual for circuit details, and an outlet that shares its breaker with other heavy appliances can trip.',
+    match: (s) => s.standardOutlet,
+  },
+  {
+    key: 'dedicated120',
+    title: '120V on a dedicated 20A or 30A circuit',
+    body: 'Same voltage as a household outlet, but they draw more current than a standard 15A circuit carries. A 20A circuit uses a NEMA 5-20 outlet, which has one T-shaped slot. The 30A models use a locking plug. Most homes need an electrician to add one of these circuits.',
+    match: (s) => s.power === '120V dedicated circuit',
+  },
+  {
+    key: 'v240',
+    title: '240V circuit',
+    body: 'These need a 240V circuit with a double-pole breaker, like an electric dryer or range. Most plug into a matching outlet (NEMA 6-20 or a locking L6 type). Plan on an electrician.',
+    match: (s) => s.power === '240V plug-in' || s.power === '240V (connection not published)',
+  },
+  {
+    key: 'hardwired',
+    title: 'Hardwired',
+    body: 'No plug at all: the heater is wired directly into a circuit by a licensed electrician. This is typical for traditional saunas.',
+    match: (s) => s.hardwired,
+  },
+];
+const standardCount = saunas.filter((s) => s.standardOutlet).length;
+const plunges = getColdPlunges().filter((p) => p.hasChiller && p.style !== 'Hot + cold combo');
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Sauna electrical requirements',
+  dateModified: '2026-11-01',
+  author: { '@type': 'Organization', name: 'The Contrast Index' },
+};
+---
+<Base title="Sauna Electrical Requirements: 120V vs 240V, Plug-in vs Hardwired" description={`Which home saunas plug into a standard outlet and which need a 20A, 30A or 240V circuit. Electrical specs for ${saunas.length} saunas and ${plunges.length} cold plunges, from each manufacturer.`} schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/guides/">Guides</a></p>
+    <h1>Sauna electrical requirements</h1>
+    <p class="lead">Before price, check power. Of the {saunas.length} saunas in our index, {standardCount} plug into a standard outlet. The rest need a dedicated circuit, a 240V line, or hardwiring by an electrician.</p>
+  </div>
+  <div class="wrap">
+    {tiers.map((t) => {
+      const list = saunas.filter(t.match).sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9));
+      return list.length ? (
+        <section>
+          <h2>{t.title} ({list.length})</h2>
+          <p class="prose">{t.body}</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Model</th><th scope="col">Electrical, as published</th><th scope="col">Placement</th><th scope="col" class="num">Price</th></tr></thead>
+              <tbody>
+                {list.map((s) => (
+                  <tr>
+                    <td><a class="model" href={`/saunas/${s.slug}/`}>{s.name}</a><span class="sub">{s.heat}</span></td>
+                    <td>{s.raw['Electrical']}</td>
+                    <td>{s.placement}</td>
+                    <td class="num">{s.price != null ? usd(s.price) : <span class="np">Not published</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null;
+    })}
+
+    <div class="prose">
+      <h2>Cold plunges</h2>
+      <p>Cold plunge chillers are lighter loads. Every chiller in the index that publishes its power runs on 120V, but many brands want a dedicated 15A circuit so nothing else shares the breaker. Many also call for a GFCI-protected outlet, which matters anywhere water and electricity meet.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Model</th><th scope="col">Power</th><th scope="col">Electrical, as published</th></tr></thead>
+        <tbody>
+          {plunges.map((p) => (
+            <tr>
+              <td><a class="model" href={`/cold-plunges/${p.slug}/`}>{p.name}</a></td>
+              <td>{plungePower(p) === 'Not published' ? <span class="np">Not published</span> : plungePower(p)}</td>
+              <td>{p.raw['Electrical']}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout">
+      <p>This guide summarizes what each manufacturer publishes. It isn't electrical advice. Have a licensed electrician confirm your panel's capacity and local code requirements before you buy, especially for outdoor installs.</p>
+    </div>
+  </div>
+</Base>

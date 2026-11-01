@@ -1,0 +1,44 @@
+<script is:inline>
+  // Filters and sorts the rows of a finder table using data- attributes.
+  document.querySelectorAll('[data-finder]').forEach((root) => {
+    const rows = [...root.querySelectorAll('tbody tr')];
+    const tbody = root.querySelector('tbody');
+    const selects = [...root.querySelectorAll('select[data-filter]')];
+    const sort = root.querySelector('select[data-sort]');
+    const count = root.querySelector('[data-count]');
+    const empty = root.querySelector('[data-empty]');
+    function apply() {
+      let shown = 0;
+      rows.forEach((r) => {
+        const ok = selects.every((s) => {
+          const v = s.value;
+          if (v === 'any') return true;
+          const key = s.dataset.filter;
+          const cell = r.dataset[key] || '';
+          if (s.dataset.mode === 'max') return cell !== '' && Number(cell) <= Number(v);
+          if (s.dataset.mode === 'min') return cell !== '' && Number(cell) >= Number(v);
+          return cell.split(' ').includes(v);
+        });
+        r.hidden = !ok;
+        if (ok) shown++;
+      });
+      if (sort) {
+        const [key, dir] = sort.value.split(':');
+        const val = (r) => (r.dataset[key] === '' || r.dataset[key] == null ? null : Number(r.dataset[key]));
+        rows.sort((a, b) => {
+          const x = val(a), y = val(b);
+          if (x === null && y === null) return 0;
+          if (x === null) return 1;
+          if (y === null) return -1;
+          return dir === 'asc' ? x - y : y - x;
+        });
+        rows.forEach((r) => tbody.appendChild(r));
+      }
+      count.textContent = `Showing ${shown} of ${rows.length}`;
+      empty.hidden = shown !== 0;
+    }
+    selects.forEach((s) => s.addEventListener('change', apply));
+    if (sort) sort.addEventListener('change', apply);
+    apply();
+  });
+</script>

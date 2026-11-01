@@ -1,0 +1,63 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  schema?: object | object[];
+}
+const { title, description, schema } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const fullTitle = Astro.url.pathname === '/' ? title : `${title} | The Contrast Index`;
+const nav = [
+  { href: '/cold-plunges/', label: 'Cold plunges' },
+  { href: '/saunas/', label: 'Saunas' },
+  { href: '/guides/', label: 'Guides' },
+  { href: '/how-we-rate/', label: 'How we rate' },
+];
+const here = Astro.url.pathname;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preload" href="/fonts/archivo-latin-variable.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/styles.css" />
+    {schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="wordmark" href="/" aria-label="The Contrast Index home">
+          <span class="wm-the">The</span>
+          <span class="wm-name">Contrast Index</span>
+        </a>
+        <nav aria-label="Main">
+          <ul>
+            {nav.map((n) => (
+              <li><a href={n.href} aria-current={here.startsWith(n.href) ? 'page' : undefined}>{n.label}</a></li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <p class="footer-name">The Contrast Index</p>
+        <p>Sauna and cold plunge specs, taken from each manufacturer and dated. Some links may earn us a commission at no cost to you; it never affects which products we list or how we order them. <a href="/how-we-rate/">How we rate</a>.</p>
+        <p class="muted">Specs and prices change. Always confirm with the manufacturer before you buy.</p>
+      </div>
+    </footer>
+  </body>
+</html>

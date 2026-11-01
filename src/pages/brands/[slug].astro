@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getBrands, usd } from '../../lib/data.js';
+
+export function getStaticPaths() {
+  return getBrands().map((b) => ({ params: { slug: b.slug }, props: { b } }));
+}
+const { b } = Astro.props;
+const plunges = b.products.filter((p) => p.category === 'cold-plunges');
+const saunas = b.products.filter((p) => p.category === 'saunas');
+---
+<Base title={`${b.name}: Every Model, Specs and Prices`} description={`All ${b.products.length} ${b.name} models in The Contrast Index, with specs and prices sourced from ${b.name}.`}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/brands/">Brands</a></p>
+    <h1>{b.name}</h1>
+    <p class="lead">{b.products.length} {b.products.length === 1 ? 'model' : 'models'} in the index, with specs taken from {b.name}'s own pages.</p>
+  </div>
+  <div class="wrap">
+    {[['Cold plunges', plunges], ['Saunas', saunas]].filter(([, l]) => l.length).map(([label, list]) => (
+      <section>
+        <h2>{label}</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th scope="col">Model</th><th scope="col">Type</th><th scope="col" class="num">Price</th></tr></thead>
+            <tbody>
+              {list.map((p) => (
+                <tr>
+                  <td><a class="model" href={`/${p.category}/${p.slug}/`}>{p.model}</a></td>
+                  <td>{p.type}</td>
+                  <td class="num">{p.price != null ? usd(p.price) : <span class="np">Not published</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    ))}
+  </div>
+</Base>

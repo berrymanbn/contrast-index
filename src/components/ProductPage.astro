@@ -1,0 +1,93 @@
+---
+import Base from '../layouts/Base.astro';
+import TempScale from './TempScale.astro';
+import SourceNote from './SourceNote.astro';
+import { usd, isMissing } from '../lib/data.js';
+
+interface Props { p: any; siblings: any[] }
+const { p, siblings } = Astro.props;
+const isPlunge = p.category === 'cold-plunges';
+const section = isPlunge ? { href: '/cold-plunges/', label: 'Cold plunges' } : { href: '/saunas/', label: 'Saunas' };
+const hidden = new Set(['Brand', 'Model', 'Sale price (USD)', 'Regular price (USD)', 'Spec source URL', 'Date checked', 'Affiliate program', 'Notes & conflicts']);
+const specs = Object.entries(p.raw).filter(([k]) => !hidden.has(k));
+const marks = isPlunge
+  ? (p.low != null ? [{ low: p.low, high: p.high ?? p.low, kind: 'cold' }] : [])
+  : (p.maxTemp != null ? [{ high: p.maxTemp, kind: 'heat' }] : []);
+const scaleCaption = isPlunge
+  ? (p.low != null ? `Rated down to ${p.low}°F${p.high ? `, and up to ${p.high}°F with heating` : ''}.` : 'Coldest temperature not published.')
+  : (p.maxTemp != null ? `Rated up to ${p.maxTemp}°F.` : 'Max temperature not published.');
+const summary = isPlunge
+  ? `${p.name}: ${p.style.toLowerCase()} cold plunge${p.gallons ? `, ${p.gallons} gallons` : ''}${p.low != null ? `, rated to ${p.low}°F` : ''}. Full specs, electrical needs and price, sourced from ${p.brand}.`
+  : `${p.name}: ${p.heat.toLowerCase()} ${p.placement.toLowerCase()} sauna for ${p.capMin === p.capMax ? p.capMin : `${p.capMin}–${p.capMax}`}. Power: ${p.power}. Full specs and price, sourced from ${p.brand}.`;
+const schema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: p.name,
+    brand: { '@type': 'Brand', name: p.brand },
+    category: isPlunge ? 'Cold plunge' : 'Sauna',
+    description: summary,
+    ...(p.price != null && {
+      offers: { '@type': 'Offer', price: p.price, priceCurrency: 'USD', url: p.source },
+    }),
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: new URL('/', Astro.site).href },
+      { '@type': 'ListItem', position: 2, name: section.label, item: new URL(section.href, Astro.site).href },
+      { '@type': 'ListItem', position: 3, name: p.name },
+    ],
+  },
+];
+---
+<Base title={`${p.name} Specs and Price`} description={summary} schema={schema}>
+  <div class="wrap">
+    <div class="product-head">
+      <div>
+        <p class="crumbs"><a href={section.href}>{section.label}</a> / <a href={`/brands/${p.brandSlug}/`}>{p.brand}</a></p>
+        <h1>{p.name}</h1>
+        <p class="lead">{p.type}</p>
+        <TempScale marks={marks} caption={scaleCaption} />
+      </div>
+      <div class="price-box">
+        {p.price != null ? (
+          <p class="price">{usd(p.price)}{p.listPrice && p.listPrice > p.price ? <span class="price-list">{usd(p.listPrice)}</span> : null}</p>
+        ) : (
+          <p class="price np">Price not published</p>
+        )}
+        <p class="muted">Listed by {p.brand} on the date checked. Prices change often.</p>
+        <a class={`btn ${isPlunge ? 'btn-cold' : 'btn-heat'}`} href={p.source} rel="nofollow noopener" target="_blank">Check current price at {p.brand}</a>
+      </div>
+    </div>
+
+    <h2>Specifications</h2>
+    <div class="table-wrap spec-table">
+      <table>
+        <tbody>
+          {specs.map(([k, v]) => (
+            <tr><th scope="row">{k}</th><td>{isMissing(v) ? <span class="np">{v || 'Not published'}</span> : v}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <SourceNote source={p.source} checked={p.checked} brand={p.brand} />
+
+    {p.notes && (
+      <aside class="notes">
+        <h2>Notes on the source</h2>
+        <p>{p.notes}</p>
+      </aside>
+    )}
+
+    {siblings.length > 0 && (
+      <>
+        <h2>More from {p.brand}</h2>
+        <ul>
+          {siblings.map((s) => <li><a href={`/${s.category}/${s.slug}/`}>{s.name}</a> {s.price != null ? `(${usd(s.price)})` : ''}</li>)}
+        </ul>
+      </>
+    )}
+  </div>
+</Base>

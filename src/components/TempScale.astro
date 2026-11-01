@@ -1,0 +1,39 @@
+---
+// The shared temperature axis: 20°F to 210°F. Every product is placed on the
+// same scale, so cold plunges sit left and saunas sit right.
+interface Mark {
+  low?: number | null;
+  high?: number | null;
+  kind: 'cold' | 'heat';
+  label?: string;
+}
+interface Props {
+  marks: Mark[];
+  size?: 'hero' | 'inline';
+  caption?: string;
+}
+const { marks, size = 'inline', caption } = Astro.props;
+const MIN = 20, MAX = 210;
+const pct = (t: number) => ((Math.min(Math.max(t, MIN), MAX) - MIN) / (MAX - MIN)) * 100;
+const ticks = [32, 50, 104, 150, 200];
+---
+<figure class={`tscale tscale-${size}`}>
+  <div class="tscale-track" role="img" aria-label={caption ?? 'Temperature range on a scale from 20 to 210 degrees Fahrenheit'}>
+    {ticks.map((t) => (
+      <span class="tscale-tick" style={`left:${pct(t)}%`}><span>{t}°F</span></span>
+    ))}
+    {marks.map((m) => {
+      const a = m.low ?? m.high;
+      const b = m.high ?? m.low;
+      if (a == null || b == null) return null;
+      const left = pct(Math.min(a, b));
+      const width = Math.max(pct(Math.max(a, b)) - left, 0);
+      return width < 0.8 ? (
+        <span class={`tscale-dot ${m.kind}`} style={`left:${left}%`} title={m.label}></span>
+      ) : (
+        <span class={`tscale-range ${m.kind}`} style={`left:${left}%;width:${width}%`} title={m.label}></span>
+      );
+    })}
+  </div>
+  {caption && <figcaption>{caption}</figcaption>}
+</figure>
