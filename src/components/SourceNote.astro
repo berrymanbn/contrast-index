@@ -1,9 +1,9 @@
 ---
-interface Props { source: string; checked: string; brand: string }
-const { source, checked, brand } = Astro.props;
+interface Props { source: string; checked: string; brand: string; model?: string; productType?: string }
+const { source, checked, brand, model, productType } = Astro.props;
 const date = new Date(checked + 'T12:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 ---
 <p class="source-note">
-  Specs from <a href={source} rel="nofollow noopener" target="_blank">{brand}'s published page</a>, checked {date}.
+  Specs from <a href={source} rel="nofollow noopener" target="_blank" data-track="brand_click" data-brand={brand} data-model={model} data-product-type={productType} data-page-type="product" data-link-location="source_note">{brand}'s published page</a>, checked {date}.
   Anything marked "Not published" isn't stated by {brand}; we don't estimate it.
 </p>

@@ -58,7 +58,7 @@ const schema = [
           <p class="price np">Price not published</p>
         )}
         <p class="muted">Listed by {p.brand} on the date checked. Prices change often.</p>
-        <a class={`btn ${isPlunge ? 'btn-cold' : 'btn-heat'}`} href={p.source} rel="nofollow noopener" target="_blank">Check current price at {p.brand}</a>
+        <a class={`btn ${isPlunge ? 'btn-cold' : 'btn-heat'}`} href={p.source} rel="nofollow noopener" target="_blank" data-track="brand_click" data-brand={p.brand} data-model={p.model} data-product-type={isPlunge ? 'cold_plunge' : 'sauna'} data-page-type="product" data-link-location="price_button">Check current price at {p.brand}</a>
       </div>
     </div>
 
@@ -72,7 +72,7 @@ const schema = [
         </tbody>
       </table>
     </div>
-    <SourceNote source={p.source} checked={p.checked} brand={p.brand} />
+    <SourceNote source={p.source} checked={p.checked} brand={p.brand} model={p.model} productType={isPlunge ? 'cold_plunge' : 'sauna'} />
 
     {p.notes && (
       <aside class="notes">
