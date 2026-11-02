@@ -23,6 +23,7 @@ const here = Astro.url.pathname;
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+    {here === '/' && <meta name="impact-site-verification" value="698db054-1cd0-4c7b-8614-c67b60037d8d" />}
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
