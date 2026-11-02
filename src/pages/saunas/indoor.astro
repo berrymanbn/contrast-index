@@ -1,0 +1,70 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getSaunas, usd, dims } from '../../lib/data.js';
+
+const indoor = getSaunas().filter((s) => s.placement === 'Indoor').map((s) => ({ ...s, d: dims(s.raw['Dimensions (in)']) }));
+const groups = [
+  { title: 'Plug into a standard outlet', fn: (s) => s.standardOutlet, body: 'No electrician needed for the outlet itself. Check the manual for whether the brand wants nothing else on that circuit.' },
+  { title: '120V on a dedicated circuit', fn: (s) => s.power === '120V dedicated circuit', body: 'Same voltage as a household outlet, but a dedicated 20A or 30A circuit. Most homes need an electrician to add one.' },
+  { title: '240V', fn: (s) => /240V/.test(s.power), body: 'Needs a 240V circuit, like an electric dryer. Plan on an electrician.' },
+];
+const prices = indoor.map((s) => s.price).filter((n) => n != null);
+const heights = indoor.map((s) => s.d?.h).filter(Boolean);
+const withDims = indoor.filter((s) => s.d);
+const seatLabel = (s) => (s.capMin === s.capMax ? s.capMin : `${s.capMin}–${s.capMax}`);
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Indoor saunas for home',
+  dateModified: '2026-11-01',
+  author: { '@type': 'Organization', name: 'The Contrast Index' },
+};
+---
+<Base title="Indoor Sauna for Home: Sizes, Power and Prices Compared" description={`Compare ${indoor.length} indoor home saunas by size, ceiling height, power and price, from ${usd(Math.min(...prices))}. Specs sourced from each manufacturer.`} schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/saunas/">Saunas</a></p>
+    <h1>Indoor saunas for home</h1>
+    <p class="lead">{indoor.length} indoor saunas, priced from {usd(Math.min(...prices))} to {usd(Math.max(...prices))}. Indoors, two things decide what fits before price does: your ceiling height and your electrical panel.</p>
+  </div>
+  <div class="wrap">
+    <div class="stat-row">
+      <div><strong>{indoor.filter((s) => s.standardOutlet).length}</strong>plug into a standard outlet</div>
+      <div><strong>{Math.min(...heights)}–{Math.max(...heights)} in</strong>tall, where published</div>
+      <div><strong>{indoor.length - withDims.length}</strong>don't publish dimensions on the page we checked</div>
+    </div>
+
+    <div class="prose">
+      <h2>Check your ceiling first</h2>
+      <p>Indoor cabins in the index stand {Math.min(...heights)} to {Math.max(...heights)} inches tall ({(Math.min(...heights) / 12).toFixed(1)} to {(Math.max(...heights) / 12).toFixed(1)} feet). A standard 8-foot ceiling is 96 inches, which leaves room for most of them, but basements and sloped ceilings can be tighter. Brands also call for clearance above and around the cabin, so check the owner's manual before you measure.</p>
+      <p>Every indoor model in the index is infrared. Every traditional sauna in the index runs on 240V or is hardwired, and all of them are outdoor models; indoor traditional rooms are usually custom builds or kits. Compare the two in <a href="/guides/infrared-vs-traditional-sauna/">infrared vs traditional</a>.</p>
+    </div>
+
+    {groups.map((g) => {
+      const list = indoor.filter(g.fn).sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9));
+      return list.length ? (
+        <section>
+          <h2>{g.title} ({list.length})</h2>
+          <p class="prose">{g.body}</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th scope="col">Model</th><th scope="col" class="num">Seats</th><th scope="col" class="num">W × D × H (in)</th><th scope="col" class="num">Max temp</th><th scope="col">Electrical</th><th scope="col" class="num">Price</th></tr></thead>
+              <tbody>
+                {list.map((s) => (
+                  <tr>
+                    <td><a class="model" href={`/saunas/${s.slug}/`}>{s.name}</a></td>
+                    <td class="num">{seatLabel(s)}</td>
+                    <td class="num">{s.d ? `${s.d.w} × ${s.d.d} × ${s.d.h}` : <span class="np">Not published</span>}</td>
+                    <td class="num">{s.maxTemp != null ? `${s.maxTemp}°F` : <span class="np">Not published</span>}</td>
+                    <td>{s.raw['Electrical']}</td>
+                    <td class="num">{s.price != null ? usd(s.price) : <span class="np">Not published</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null;
+    })}
+    <p class="source-note">See the <a href="/best-home-sauna/">best home sauna picks</a>, or filter all saunas in the <a href="/saunas/">sauna finder</a>.</p>
+  </div>
+</Base>

@@ -1,0 +1,85 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getColdPlunges, usd } from '../../lib/data.js';
+
+const EIA = 'https://www.eia.gov/outlooks/steo/report/elec_coal_renew.php';
+const RATE = 18.2; // cents/kWh, EIA STEO (Oct 6, 2026) projected 2026 U.S. residential average
+const all = getColdPlunges().filter((p) => p.price != null);
+const median = (a) => { const s = [...a].sort((x, y) => x - y); const m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+const styles = ['Inflatable or portable', 'Hard tub', 'Stainless steel', 'Tub only'];
+const rows = styles.map((st) => {
+  const list = all.filter((p) => p.style === st);
+  const prices = list.map((p) => p.price);
+  return list.length ? { st, n: list.length, lo: Math.min(...prices), mid: median(prices), hi: Math.max(...prices) } : null;
+}).filter(Boolean);
+const presets = [
+  { label: 'The Cold Life Pro-Curve chiller: 450W', watts: 450, href: '/cold-plunges/the-cold-life-ultimate-lite-inflatable/' },
+  { label: 'Desert Plunge 1/4 HP: 6.5A at 110V (about 715W)', watts: 715, href: '/cold-plunges/desert-plunge-exclusive/' },
+];
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Cold plunge cost: purchase price and running cost',
+  dateModified: '2026-11-01',
+  author: { '@type': 'Organization', name: 'The Contrast Index' },
+};
+---
+<Base title="Cold Plunge Cost: Prices by Type and Electricity Calculator" description={`What a cold plunge costs to buy and run: ${all.length} models from ${usd(Math.min(...all.map((p) => p.price)))} to ${usd(Math.max(...all.map((p) => p.price)))}, plus a calculator for the chiller's electricity cost.`} schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/cold-plunges/">Cold plunges</a></p>
+    <h1>Cold plunge cost</h1>
+    <p class="lead">A cold plunge with a chiller costs {usd(Math.min(...all.filter((p) => p.hasChiller).map((p) => p.price)))} to {usd(Math.max(...all.map((p) => p.price)))} in our index, and the chiller adds an electricity bill on top. Here's what each type costs to buy, and a calculator for what it costs to run.</p>
+  </div>
+  <div class="wrap">
+    <h2>Purchase price by type</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Type</th><th scope="col" class="num">Models</th><th scope="col" class="num">Lowest</th><th scope="col" class="num">Median</th><th scope="col" class="num">Highest</th></tr></thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr><td>{r.st}</td><td class="num">{r.n}</td><td class="num">{usd(r.lo)}</td><td class="num">{usd(r.mid)}</td><td class="num">{usd(r.hi)}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="source-note">Brand-listed prices on November 1, 2026, many of them sale prices. "Tub only" has no chiller, so it needs ice or a separately bought chiller.</p>
+
+    <h2>Electricity cost calculator</h2>
+    <form class="calc" id="run" onsubmit="return false">
+      <div class="calc-fields">
+        <label for="r-watts">Chiller power draw (watts)<input id="r-watts" type="number" min="1" step="1" value="715" inputmode="numeric" /></label>
+        <label for="r-hours">Hours the chiller runs per day<input id="r-hours" type="number" min="0" max="24" step="0.5" value="8" inputmode="decimal" /></label>
+        <label for="r-rate">Electricity rate (cents per kWh)<input id="r-rate" type="number" min="1" step="0.1" value={RATE} inputmode="decimal" /></label>
+      </div>
+      <output class="calc-out" for="r-watts r-hours r-rate" aria-live="polite">
+        <span class="calc-big" id="r-month"></span>
+        <span id="r-detail"></span>
+      </output>
+    </form>
+    <div class="prose">
+      <p><strong>Power draw:</strong> few brands publish what their chiller actually draws. Two in the index do:</p>
+      <ul>
+        {presets.map((p) => <li><a href={p.href}>{p.label}</a></li>)}
+      </ul>
+      <p>If a brand lists amps instead, multiply amps by volts to get watts. Don't use the circuit size (like "15A dedicated circuit"); that's the most the circuit can carry, not what the chiller uses.</p>
+      <p><strong>Hours per day</strong> is your estimate. The chiller cycles on and off, running more in a warm room, in summer, after a fresh fill, and when the lid is off. The 8-hour starting value is only an example. Plunge Chill, for one, says its 1 HP chiller uses about 4.25 kWh to cool water from 90°F to about 39°F.</p>
+      <p><strong>Rate:</strong> the starting value is the U.S. Energy Information Administration's projected 2026 average residential price, {RATE} cents per kWh (<a href={EIA} rel="noopener" target="_blank">EIA Short-Term Energy Outlook</a>, October 2026). Use the rate on your own bill for a better estimate.</p>
+      <p>Compare chillers in <a href="/cold-plunges/chillers/">cold plunge chillers compared</a>, or see the <a href="/best-cold-plunge/">best cold plunge picks</a>.</p>
+    </div>
+  </div>
+  <script is:inline>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      function money(n) { return '$' + n.toFixed(2); }
+      function calc() {
+        var w = parseFloat($('r-watts').value), h = parseFloat($('r-hours').value), r = parseFloat($('r-rate').value);
+        if (!(w > 0 && h >= 0 && h <= 24 && r > 0)) { $('r-month').textContent = 'Enter watts, hours (0–24) and a rate'; $('r-detail').textContent = ''; return; }
+        var kwhDay = (w / 1000) * h, day = kwhDay * r / 100;
+        $('r-month').textContent = 'About ' + money(day * 30.4) + ' a month';
+        $('r-detail').textContent = kwhDay.toFixed(1) + ' kWh a day, ' + money(day) + ' a day, about ' + money(day * 365) + ' a year.';
+      }
+      ['r-watts', 'r-hours', 'r-rate'].forEach(function (id) { $(id).addEventListener('input', calc); });
+      calc();
+    })();
+  </script>
+</Base>

@@ -1,0 +1,30 @@
+---
+// One rules-based "best" category: the rule in words, the winner, and runners-up.
+import { usd } from '../lib/data.js';
+interface Pick { p: any; detail: string }
+interface Props { id: string; title: string; rule: string; picks: Pick[]; note?: string }
+const { id, title, rule, picks, note } = Astro.props;
+const [winner, ...rest] = picks;
+---
+{winner && (
+  <section class="pick" id={id}>
+    <h2>{title}: {winner.p.name}</h2>
+    <p class="pick-rule"><strong>Rule:</strong> {rule}</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Rank</th><th scope="col">Model</th><th scope="col">Why it ranks here</th><th scope="col" class="num">Price</th></tr></thead>
+        <tbody>
+          {[winner, ...rest].map((x, i) => (
+            <tr class={i === 0 ? 'pick-winner' : ''}>
+              <td>{i === 0 ? 'Pick' : `Runner-up ${i}`}</td>
+              <td><a class="model" href={`/${x.p.category}/${x.p.slug}/`}>{x.p.name}</a></td>
+              <td>{x.detail}</td>
+              <td class="num">{x.p.price != null ? usd(x.p.price) : 'Not published'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    {note && <p class="source-note">{note}</p>}
+  </section>
+)}

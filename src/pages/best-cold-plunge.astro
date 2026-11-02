@@ -1,0 +1,86 @@
+---
+import Base from '../layouts/Base.astro';
+import PickList from '../components/PickList.astro';
+import { getColdPlunges, usd } from '../lib/data.js';
+import { fmtHp } from '../lib/format.js';
+
+const all = getColdPlunges();
+const sys = all.filter((p) => p.hasChiller && p.style !== 'Hot + cold combo' && p.price != null);
+const gph = (p) => (p.hp && p.gallons ? p.gallons / p.hp : null);
+const top = (list, sort, detail, n = 3) => [...list].sort(sort).slice(0, n).map((p) => ({ p, detail: detail(p) }));
+const byLowThenPrice = (a, b) => a.low - b.low || a.price - b.price;
+const tempDetail = (p) => `Rated to ${p.low}°F${p.hp ? `, ${fmtHp(p.hp)} chiller` : ''}${p.gallons ? `, ${p.gallons} gal` : ''}`;
+
+const cats = [
+  {
+    id: 'coldest',
+    title: 'Coldest overall',
+    rule: 'The lowest rated water temperature. Ties go to the lower price.',
+    picks: top(sys.filter((p) => p.low != null), byLowThenPrice, tempDetail),
+  },
+  {
+    id: 'coldest-under-5000',
+    title: 'Coldest under $5,000',
+    rule: 'The lowest rated water temperature among systems priced under $5,000. Ties go to the lower price.',
+    picks: top(sys.filter((p) => p.low != null && p.price < 5000), byLowThenPrice, tempDetail),
+  },
+  {
+    id: 'budget',
+    title: 'Lowest price rated to 37°F or colder',
+    rule: 'The lowest price among chiller systems rated to reach 37°F or colder.',
+    picks: top(sys.filter((p) => p.low != null && p.low <= 37), (a, b) => a.price - b.price, tempDetail),
+  },
+  {
+    id: 'chiller-power',
+    title: 'Most chiller power for its water',
+    rule: 'The fewest gallons of tub capacity per chiller horsepower. Only systems that publish both numbers qualify.',
+    picks: top(sys.filter((p) => gph(p) != null), (a, b) => gph(a) - gph(b), (p) => `${Math.round(gph(p))} gal per HP (${p.gallons} gal, ${fmtHp(p.hp)})`),
+  },
+  {
+    id: 'hot-and-cold',
+    title: 'Best value for hot and cold in one tub',
+    rule: 'The lowest price among systems that heat as well as cool, with heating included in the listed price (not an optional heater or upgrade).',
+    picks: top(sys.filter((p) => p.heatIncluded && p.low != null), (a, b) => a.price - b.price, (p) => `${p.low}°F to ${p.high}°F`),
+  },
+  {
+    id: 'standard-outlet',
+    title: 'Best for a standard outlet',
+    rule: 'The lowest price among systems that run on 120V without the brand requiring a dedicated circuit.',
+    picks: top(sys.filter((p) => p.volts === 120 && !p.dedicated), (a, b) => a.price - b.price, (p) => `${p.raw['Electrical']}${p.low != null ? `; rated to ${p.low}°F` : ''}`),
+  },
+];
+const budgetWinner = cats.find((c) => c.id === 'budget').picks[0]?.p;
+if (budgetWinner?.brand === 'Plunge Chill') {
+  cats.find((c) => c.id === 'budget').note = 'Plunge Chill rates its 1 HP chiller for up to 110 gallons, and some of its bundles come with larger tubs. See the chiller comparison before buying.';
+}
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Best cold plunges by category',
+  itemListElement: cats.filter((c) => c.picks[0]).map((c, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: `${c.title}: ${c.picks[0].p.name}`,
+    url: new URL(`/cold-plunges/${c.picks[0].p.slug}/`, Astro.site).href,
+  })),
+};
+---
+<Base title="Best Cold Plunge (2026): Picks by Spec, Not Opinion" description={`The best cold plunge for each need, picked by published specs: coldest, best under $5,000, most chiller power, hot and cold, and standard outlet. ${sys.length} chiller systems compared.`} schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/cold-plunges/">Cold plunges</a></p>
+    <h1>Best cold plunge</h1>
+    <p class="lead">Each pick below follows a stated rule applied to the specs brands publish. Nothing here depends on opinion or on which brands pay us. When the data changes, the picks change with it.</p>
+  </div>
+  <div class="wrap">
+    <nav class="pick-index" aria-label="Categories">
+      <ul>
+        {cats.filter((c) => c.picks[0]).map((c) => <li><a href={`#${c.id}`}>{c.title}</a></li>)}
+      </ul>
+    </nav>
+    {cats.map((c) => <PickList {...c} />)}
+    <div class="callout">
+      <p>These picks compare {sys.length} chiller systems priced from {usd(Math.min(...sys.map((p) => p.price)))} to {usd(Math.max(...sys.map((p) => p.price)))}. Specs a brand doesn't publish can't qualify a model for a category, so a missing number can leave a good product out. See every model in the <a href="/cold-plunges/">cold plunge finder</a> or read <a href="/how-we-rate/">how we rate</a>.</p>
+    </div>
+  </div>
+</Base>

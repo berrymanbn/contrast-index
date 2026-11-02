@@ -1,0 +1,54 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getColdPlunges, usd } from '../../lib/data.js';
+
+const all = getColdPlunges();
+const chilled = all.filter((p) => p.hasChiller && p.style !== 'Hot + cold combo' && p.price != null);
+const tubOnly = all.filter((p) => !p.hasChiller);
+const lows = chilled.map((p) => p.low).filter((n) => n != null);
+const barrel = tubOnly.find((p) => p.slug === 'ice-barrel-ice-barrel-500');
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Cold plunge vs ice bath',
+  dateModified: '2026-11-01',
+  author: { '@type': 'Organization', name: 'The Contrast Index' },
+};
+---
+<Base title="Cold Plunge vs Ice Bath: Cost, Temperature and Setup Compared" description="The difference between a cold plunge with a chiller and an ice bath: how cold each gets, what each costs, and the setup and upkeep involved." schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/guides/">Guides</a></p>
+    <h1>Cold plunge vs ice bath</h1>
+    <p class="lead">An ice bath is a tub of water you cool with ice each time. A cold plunge, as most brands use the term, adds a chiller that keeps the water at a set temperature. The trade is upfront price against daily effort.</p>
+  </div>
+  <div class="wrap">
+    <div class="table-wrap spec-table">
+      <table>
+        <thead><tr><th scope="col"></th><th scope="col">Cold plunge with chiller</th><th scope="col">Ice bath (no chiller)</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">How it gets cold</th><td>A chiller cools and circulates the water</td><td>You add ice before each session</td></tr>
+          <tr><th scope="row">Temperature</th><td>Rated {Math.min(...lows)}–{Math.max(...lows)}°F in our index, held automatically</td><td>Depends on how much ice you add and how long it lasts</td></tr>
+          <tr><th scope="row">Price in our index</th><td>{usd(Math.min(...chilled.map((p) => p.price)))} to {usd(Math.max(...chilled.map((p) => p.price)))} ({chilled.length} models)</td><td>{barrel ? `${usd(barrel.price)} for the ${barrel.model}, plus ice` : 'Any tub, plus ice'}</td></tr>
+          <tr><th scope="row">Ongoing cost</th><td>Electricity for the chiller, plus filters and sanitizer</td><td>Ice for every session</td></tr>
+          <tr><th scope="row">Power</th><td>120V outlet; many brands want a dedicated circuit</td><td>None</td></tr>
+          <tr><th scope="row">Water care</th><td>Filtration, and often ozone or UV, keeps water in use for longer</td><td>Usually drained and refilled more often</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="prose">
+      <h2>Temperature</h2>
+      <p>Chiller systems in our index are rated to hold anywhere from {Math.min(...lows)}°F to {Math.max(...lows)}°F, and you set the target. Without a chiller, the water starts at tap or room temperature and warms back up after the ice melts. Ice Barrel, which sells an insulated tub without a chiller, says its water often holds around 59°F.</p>
+
+      <h2>Cost</h2>
+      <p>An insulated tub costs less upfront: the {barrel ? <a href={`/cold-plunges/${barrel.slug}/`}>{barrel.name}</a> : 'cheapest tub'} lists at {barrel ? usd(barrel.price) : 'n/a'}. The cheapest chiller system in our index lists at {usd(Math.min(...chilled.map((p) => p.price)))}, though budget systems use small chillers, so check the <a href="/cold-plunges/chillers/">chiller comparison</a>. An ice bath's cost keeps going with every bag of ice; a chiller's ongoing cost is electricity. Estimate yours with the <a href="/cold-plunges/cost/">cold plunge cost calculator</a>.</p>
+
+      <h2>Which to choose</h2>
+      <ul>
+        <li><strong>Choose an ice bath</strong> if you plunge a few times a month, want the lowest upfront cost, or don't have a suitable outlet.</li>
+        <li><strong>Choose a cold plunge with a chiller</strong> if you plunge often, want the same temperature every time, or don't want to buy and haul ice.</li>
+      </ul>
+      <p>Already leaning toward a chiller? See the <a href="/best-cold-plunge/">best cold plunge picks</a> or compare every model in the <a href="/cold-plunges/">cold plunge finder</a>.</p>
+    </div>
+  </div>
+</Base>

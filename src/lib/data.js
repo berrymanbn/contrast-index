@@ -81,6 +81,8 @@ export function getColdPlunges() {
       low: num(r['Lowest temp (°F)']),
       high: num(r['Highest temp (°F)']),
       heats: num(r['Highest temp (°F)']) !== null || /heats/i.test(r['Highest temp (°F)']),
+      // Heating counts as included only when the brand doesn't call it an option, upgrade or separate variant.
+      heatIncluded: num(r['Highest temp (°F)']) !== null && !/optional|upgrade|variant|add-on/i.test(r['Highest temp (°F)']),
       hp: num(r['Chiller HP']),
       gallons: coldSide ? Number(coldSide[1]) : num(gal),
       volts: volts(elec),
@@ -144,6 +146,14 @@ export function getSaunas() {
       notes: r['Notes & conflicts'],
     };
   });
+}
+
+// Parses sauna dimensions written as "48 W × 44 D × 79 H" into inches.
+export function dims(text) {
+  const m = String(text || '').match(/([\d.]+)\s*W\s*×\s*([\d.]+)\s*D\s*×\s*([\d.]+)\s*H/);
+  if (!m) return null;
+  const [w, d, h] = m.slice(1, 4).map(Number);
+  return { w, d, h, sqft: Math.round(((w * d) / 144) * 10) / 10 };
 }
 
 export function getAll() {

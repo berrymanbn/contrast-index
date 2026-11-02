@@ -1,0 +1,65 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getSaunas, usd, dims } from '../../lib/data.js';
+
+const two = getSaunas()
+  .filter((s) => s.capMin <= 2 && s.capMax >= 2)
+  .map((s) => ({ ...s, d: dims(s.raw['Dimensions (in)']) }));
+const known = two.filter((s) => s.d).sort((a, b) => a.d.sqft - b.d.sqft);
+const unknown = two.filter((s) => !s.d);
+const ft = (inches) => `${Math.floor(inches / 12)}'${Math.round(inches % 12)}"`;
+const minFoot = known[0];
+const maxFoot = known[known.length - 1];
+const heights = known.map((s) => s.d.h);
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: '2 person sauna dimensions',
+  dateModified: '2026-11-01',
+  author: { '@type': 'Organization', name: 'The Contrast Index' },
+};
+---
+<Base title="2 Person Sauna Dimensions: Real Sizes Compared" description={`Exterior dimensions of ${known.length} two-person saunas from the manufacturers: footprints from ${minFoot.d.sqft} to ${maxFoot.d.sqft} sq ft and heights of ${Math.min(...heights)}–${Math.max(...heights)} in.`} schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/saunas/">Saunas</a></p>
+    <h1>2 person sauna dimensions</h1>
+    <p class="lead">Two-person saunas in the index take up {minFoot.d.sqft} to {maxFoot.d.sqft} square feet of floor and stand {Math.min(...heights)} to {Math.max(...heights)} inches tall. Here are the exact exterior sizes, smallest footprint first.</p>
+  </div>
+  <div class="wrap">
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th scope="col">Model</th><th scope="col" class="num">Width</th><th scope="col" class="num">Depth</th><th scope="col" class="num">Height</th><th scope="col" class="num">Footprint</th><th scope="col">Placement</th><th scope="col" class="num">Price</th></tr></thead>
+        <tbody>
+          {known.map((s) => (
+            <tr>
+              <td><a class="model" href={`/saunas/${s.slug}/`}>{s.name}</a><span class="sub">{s.capMin === s.capMax ? `${s.capMin} people` : `${s.capMin}–${s.capMax} people`}, {s.heat.toLowerCase()}</span></td>
+              <td class="num">{s.d.w} in <span class="sub">{ft(s.d.w)}</span></td>
+              <td class="num">{s.d.d} in <span class="sub">{ft(s.d.d)}</span></td>
+              <td class="num">{s.d.h} in <span class="sub">{ft(s.d.h)}</span></td>
+              <td class="num">{s.d.sqft} sq ft</td>
+              <td>{s.placement}</td>
+              <td class="num">{s.price != null ? usd(s.price) : <span class="np">Not published</span>}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="source-note">Exterior dimensions as published by each brand, width × depth × height. Footprint is width × depth. Leave extra room for the door swing and any clearance the manual requires.</p>
+
+    <div class="prose">
+      <h2>What the numbers mean for your space</h2>
+      <ul>
+        <li><strong>Smallest footprint:</strong> the <a href={`/saunas/${minFoot.slug}/`}>{minFoot.name}</a> at {minFoot.d.w} × {minFoot.d.d} inches ({minFoot.d.sqft} sq ft).</li>
+        <li><strong>Height:</strong> indoor two-person cabins here are {Math.min(...known.filter((s) => s.placement === 'Indoor').map((s) => s.d.h))}–{Math.max(...known.filter((s) => s.placement === 'Indoor').map((s) => s.d.h))} inches tall, under a standard 8-foot (96 in) ceiling. Check the manual for the clearance each brand requires above the cabin.</li>
+        <li><strong>Barrel saunas</strong> like the Almost Heaven Watoga seat 2–4 and take up much more ground, but they sit outside.</li>
+      </ul>
+      {unknown.length > 0 && (
+        <>
+          <h2>Two-person saunas without published dimensions</h2>
+          <p>The page we checked for {unknown.map((s, i) => <>{i > 0 && (i === unknown.length - 1 ? ' and ' : ', ')}<a href={`/saunas/${s.slug}/`}>{s.name}</a></>)} doesn't list exterior dimensions. Ask the brand before you plan your space.</p>
+        </>
+      )}
+      <p>Need to plug it in? Read <a href="/guides/sauna-electrical-requirements/">sauna electrical requirements</a>, or see the <a href="/saunas/indoor/">indoor sauna comparison</a>.</p>
+    </div>
+  </div>
+</Base>

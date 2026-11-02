@@ -1,0 +1,81 @@
+---
+import Base from '../../layouts/Base.astro';
+const SRC = 'https://saunakits.com/blogs/news/what-size-sauna-heater-do-i-need';
+const chart = [[150, 3], [210, 4.5], [310, 6], [420, 8], [530, 9], [700, 10.5], [850, 12], [1000, 14], [1200, 15], [1400, 18], [1600, 20]];
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Sauna heater size calculator',
+  applicationCategory: 'UtilitiesApplication',
+  operatingSystem: 'Any',
+  offers: { '@type': 'Offer', price: 0, priceCurrency: 'USD' },
+};
+---
+<Base title="Sauna Heater Size Calculator: kW for Your Room" description="Work out what size electric sauna heater (kW) your room needs from its length, width, height and glass area. Uses the common 1 kW per 45–50 cubic feet rule." schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/guides/">Guides</a></p>
+    <h1>Sauna heater size calculator</h1>
+    <p class="lead">Enter your sauna room's inside measurements to estimate the electric heater size you need. This is for traditional saunas with a heater and stones; infrared saunas come with their panels already sized.</p>
+  </div>
+  <div class="wrap">
+    <form class="calc" id="heater" onsubmit="return false">
+      <div class="calc-fields">
+        <label for="h-len">Inside length (ft)<input id="h-len" type="number" min="1" step="0.1" value="6" inputmode="decimal" /></label>
+        <label for="h-wid">Inside width (ft)<input id="h-wid" type="number" min="1" step="0.1" value="5" inputmode="decimal" /></label>
+        <label for="h-hgt">Ceiling height (ft)<input id="h-hgt" type="number" min="1" step="0.1" value="7" inputmode="decimal" /></label>
+        <label for="h-glass">Glass area (sq ft)<input id="h-glass" type="number" min="0" step="1" value="0" inputmode="decimal" /></label>
+        <label class="check" for="h-cold"><input id="h-cold" type="checkbox" /> Outdoors or poorly insulated</label>
+      </div>
+      <output class="calc-out" for="h-len h-wid h-hgt h-glass h-cold" aria-live="polite">
+        <span class="calc-big" id="h-kw"></span>
+        <span id="h-detail"></span>
+      </output>
+    </form>
+
+    <div class="prose">
+      <h2>How the estimate works</h2>
+      <ol>
+        <li><strong>Room volume:</strong> length × width × height, in cubic feet.</li>
+        <li><strong>Base heater size:</strong> 1 kW for every 45–50 cubic feet, a common rule of thumb in the sauna industry.</li>
+        <li><strong>Glass:</strong> add about 1 kW for every 10 square feet of glass, since glass loses heat faster than insulated walls.</li>
+        <li><strong>Cold or poorly insulated rooms:</strong> add about 15%.</li>
+      </ol>
+      <p>The rule of thumb and the adjustments come from <a href={SRC} rel="noopener" target="_blank">SaunaKits.com's heater sizing guide</a>. That's a retailer's rule of thumb, not a standard. Every heater maker publishes a room-volume range for each model, and that range is what to follow. Use this estimate to narrow your choices, then check the heater's spec sheet.</p>
+
+      <h2>Common heater sizes by room volume</h2>
+    </div>
+    <div class="table-wrap spec-table">
+      <table>
+        <thead><tr><th scope="col">Room volume (cu ft)</th><th scope="col">Typical heater size</th></tr></thead>
+        <tbody>
+          {chart.map(([max, kw], i) => (
+            <tr><th scope="row">{i === 0 ? 100 : chart[i - 1][0] + 1}–{max}</th><td>{kw} kW</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="source-note">Chart from <a href={SRC} rel="noopener" target="_blank">SaunaKits.com</a>, before adjustments for glass or cold rooms. Heaters of 6 kW and up typically run on 240V and are hardwired; see <a href="/guides/sauna-electrical-requirements/">sauna electrical requirements</a>.</p>
+  </div>
+  <script is:inline define:vars={{ chart }}>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      function fmt(n) { return (Math.round(n * 10) / 10).toString(); }
+      function calc() {
+        var l = parseFloat($('h-len').value), w = parseFloat($('h-wid').value), h = parseFloat($('h-hgt').value);
+        var glass = parseFloat($('h-glass').value) || 0, cold = $('h-cold').checked;
+        if (!(l > 0 && w > 0 && h > 0)) { $('h-kw').textContent = 'Enter all three measurements'; $('h-detail').textContent = ''; return; }
+        var vol = l * w * h;
+        var lo = vol / 50 + glass / 10, hi = vol / 45 + glass / 10;
+        if (cold) { lo *= 1.15; hi *= 1.15; }
+        var row = chart.find(function (r) { return vol <= r[0]; });
+        $('h-kw').textContent = fmt(lo) + ' to ' + fmt(hi) + ' kW';
+        $('h-detail').textContent = 'Room volume: ' + Math.round(vol) + ' cu ft. ' +
+          (row ? 'Typical heater for this volume before adjustments: ' + row[1] + ' kW. ' : 'This room is larger than the chart covers; talk to a heater maker. ') +
+          (vol < 100 ? 'Rooms under 100 cu ft are smaller than most heater charts cover. ' : '') +
+          'Confirm against the room-volume range on the heater’s spec sheet.';
+      }
+      ['h-len', 'h-wid', 'h-hgt', 'h-glass', 'h-cold'].forEach(function (id) { $(id).addEventListener('input', calc); });
+      calc();
+    })();
+  </script>
+</Base>

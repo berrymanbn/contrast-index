@@ -1,0 +1,78 @@
+---
+import Base from '../layouts/Base.astro';
+import PickList from '../components/PickList.astro';
+import { getSaunas, usd } from '../lib/data.js';
+
+const all = getSaunas().filter((s) => s.price != null);
+const top = (list, sort, detail, n = 3) => [...list].sort(sort).slice(0, n).map((p) => ({ p, detail: detail(p) }));
+const seats = (s) => (s.capMin === s.capMax ? `${s.capMin} ${s.capMin === 1 ? 'person' : 'people'}` : `${s.capMin}–${s.capMax} people`);
+const byPrice = (a, b) => a.price - b.price;
+
+const cats = [
+  {
+    id: 'standard-outlet',
+    title: 'Best for a standard outlet',
+    rule: 'The lowest price among saunas that plug into a standard 120V household outlet.',
+    picks: top(all.filter((s) => s.standardOutlet), byPrice, (s) => `${seats(s)}; ${s.raw['Electrical']}`),
+  },
+  {
+    id: 'two-person-standard-outlet',
+    title: 'Best 2-person sauna with no new circuit',
+    rule: 'The lowest price among saunas that seat at least 2 and plug into a standard 120V outlet.',
+    picks: top(all.filter((s) => s.standardOutlet && s.capMax >= 2), byPrice, (s) => `${seats(s)}; up to ${s.maxTemp}°F`),
+  },
+  {
+    id: 'traditional',
+    title: 'Lowest price traditional sauna',
+    rule: 'The lowest price among traditional (heated air and stones) saunas.',
+    picks: top(all.filter((s) => s.heat === 'Traditional'), byPrice, (s) => `${seats(s)}; ${s.raw['Heater type & power']}`),
+  },
+  {
+    id: 'most-seats-under-10000',
+    title: 'Most seats under $10,000',
+    rule: 'The highest seat count among saunas priced under $10,000. Ties go to the lower price.',
+    picks: top(all.filter((s) => s.price < 10000), (a, b) => b.capMax - a.capMax || a.price - b.price, (s) => `${seats(s)}; ${s.heat.toLowerCase()}, ${s.placement.toLowerCase()}`),
+  },
+  {
+    id: 'indoor-4-person',
+    title: 'Best indoor sauna for 4 or more',
+    rule: 'The lowest price among indoor saunas that seat 4 or more.',
+    picks: top(all.filter((s) => s.placement === 'Indoor' && s.capMax >= 4), byPrice, (s) => `${seats(s)}; ${s.power}`),
+  },
+  {
+    id: 'hottest-infrared',
+    title: 'Hottest infrared sauna',
+    rule: 'The highest rated max temperature among infrared saunas. Ties go to the lower price.',
+    picks: top(all.filter((s) => s.heat === 'Infrared' && s.maxTemp != null), (a, b) => b.maxTemp - a.maxTemp || a.price - b.price, (s) => `Up to ${s.maxTemp}°F; ${seats(s)}, ${s.placement.toLowerCase()}`),
+  },
+];
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Best home saunas by category',
+  itemListElement: cats.filter((c) => c.picks[0]).map((c, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: `${c.title}: ${c.picks[0].p.name}`,
+    url: new URL(`/saunas/${c.picks[0].p.slug}/`, Astro.site).href,
+  })),
+};
+---
+<Base title="Best Home Sauna (2026): Picks by Spec, Not Opinion" description={`The best home sauna for each need, picked by published specs: standard outlet, 2-person, traditional, most seats under $10,000, indoor 4-person and hottest infrared. ${all.length} saunas compared.`} schema={schema}>
+  <div class="wrap page-head">
+    <p class="crumbs"><a href="/saunas/">Saunas</a></p>
+    <h1>Best home sauna</h1>
+    <p class="lead">Each pick follows a stated rule applied to the specs brands publish, so you can see exactly why a sauna won and check whether the rule matches what you need.</p>
+  </div>
+  <div class="wrap">
+    <nav class="pick-index" aria-label="Categories">
+      <ul>
+        {cats.filter((c) => c.picks[0]).map((c) => <li><a href={`#${c.id}`}>{c.title}</a></li>)}
+      </ul>
+    </nav>
+    {cats.map((c) => <PickList {...c} />)}
+    <div class="callout heat">
+      <p>These picks compare {all.length} saunas with published prices, from {usd(Math.min(...all.map((s) => s.price)))} to {usd(Math.max(...all.map((s) => s.price)))}. Not sure about power? Read <a href="/guides/sauna-electrical-requirements/">sauna electrical requirements</a> first. See every model in the <a href="/saunas/">sauna finder</a> or read <a href="/how-we-rate/">how we rate</a>.</p>
+    </div>
+  </div>
+</Base>
