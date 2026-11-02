@@ -6,8 +6,9 @@ const indoor = getSaunas().filter((s) => s.placement === 'Indoor').map((s) => ({
 const groups = [
   { title: 'Plug into a standard outlet', fn: (s) => s.standardOutlet, body: 'No electrician needed for the outlet itself. Check the manual for whether the brand wants nothing else on that circuit.' },
   { title: '120V on a dedicated circuit', fn: (s) => s.power === '120V dedicated circuit', body: 'Same voltage as a household outlet, but a dedicated 20A or 30A circuit. Most homes need an electrician to add one.' },
-  { title: '240V', fn: (s) => /240V/.test(s.power), body: 'Needs a 240V circuit, like an electric dryer. Plan on an electrician.' },
+  { title: '240V', fn: (s) => /240V|Hardwired/.test(s.power), body: 'Needs a 240V circuit, like an electric dryer, and some are hardwired. Plan on an electrician.' },
 ];
+const indoorTrad = indoor.filter((s) => s.heat === 'Traditional');
 const prices = indoor.map((s) => s.price).filter((n) => n != null);
 const heights = indoor.map((s) => s.d?.h).filter(Boolean);
 const withDims = indoor.filter((s) => s.d);
@@ -36,7 +37,7 @@ const schema = {
     <div class="prose">
       <h2>Check your ceiling first</h2>
       <p>Indoor cabins in the index stand {Math.min(...heights)} to {Math.max(...heights)} inches tall ({(Math.min(...heights) / 12).toFixed(1)} to {(Math.max(...heights) / 12).toFixed(1)} feet). A standard 8-foot ceiling is 96 inches, which leaves room for most of them, but basements and sloped ceilings can be tighter. Brands also call for clearance above and around the cabin, so check the owner's manual before you measure.</p>
-      <p>Every indoor model in the index is infrared. Every traditional sauna in the index runs on 240V or is hardwired, and all of them are outdoor models; indoor traditional rooms are usually custom builds or kits. Compare the two in <a href="/guides/infrared-vs-traditional-sauna/">infrared vs traditional</a>.</p>
+      <p>{indoorTrad.length === 0 ? 'Every indoor model in the index is infrared.' : `${indoor.length - indoorTrad.length} of the ${indoor.length} indoor models are infrared. The traditional ${indoorTrad.length === 1 ? 'one' : 'ones'} (${indoorTrad.map((s) => s.name).join(', ')}) ${indoorTrad.length === 1 ? 'needs' : 'need'} a hardwired 240V heater, so plan on an electrician.`} Compare the two in <a href="/guides/infrared-vs-traditional-sauna/">infrared vs traditional</a>.</p>
     </div>
 
     {groups.map((g) => {

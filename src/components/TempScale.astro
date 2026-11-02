@@ -1,5 +1,5 @@
 ---
-// The shared temperature axis: 20°F to 210°F. Every product is placed on the
+// The shared temperature axis: 20°F to 240°F. Every product is placed on the
 // same scale, so cold plunges sit left and saunas sit right.
 interface Mark {
   low?: number | null;
@@ -13,12 +13,12 @@ interface Props {
   caption?: string;
 }
 const { marks, size = 'inline', caption } = Astro.props;
-const MIN = 20, MAX = 210;
+const MIN = 20, MAX = 240;
 const pct = (t: number) => ((Math.min(Math.max(t, MIN), MAX) - MIN) / (MAX - MIN)) * 100;
 const ticks = [32, 50, 104, 150, 200];
 ---
 <figure class={`tscale tscale-${size}`}>
-  <div class="tscale-track" role="img" aria-label={caption ?? 'Temperature range on a scale from 20 to 210 degrees Fahrenheit'}>
+  <div class="tscale-track" role="img" aria-label={caption ?? 'Temperature range on a scale from 20 to 240 degrees Fahrenheit'}>
     {ticks.map((t) => (
       <span class="tscale-tick" style={`left:${pct(t)}%`}><span>{t}°F</span></span>
     ))}
