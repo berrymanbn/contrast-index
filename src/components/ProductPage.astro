@@ -8,7 +8,9 @@ interface Props { p: any; siblings: any[] }
 const { p, siblings } = Astro.props;
 const isPlunge = p.category === 'cold-plunges';
 const section = isPlunge ? { href: '/cold-plunges/', label: 'Cold plunges' } : { href: '/saunas/', label: 'Saunas' };
-const hidden = new Set(['Brand', 'Model', 'Sale price (USD)', 'Regular price (USD)', 'Spec source URL', 'Date checked', 'Affiliate program', 'Notes & conflicts']);
+const hidden = new Set(['Brand', 'Model', 'Sale price (USD)', 'Regular price (USD)', 'Spec source URL', 'Date checked', 'Affiliate program', 'Affiliate URL', 'Notes & conflicts']);
+const buyUrl = p.affiliateUrl || p.source;
+const buyRel = p.affiliateUrl ? 'sponsored nofollow noopener' : 'nofollow noopener';
 const specs = Object.entries(p.raw).filter(([k]) => !hidden.has(k));
 const marks = isPlunge
   ? (p.low != null ? [{ low: p.low, high: p.high ?? p.low, kind: 'cold' }] : [])
@@ -58,7 +60,7 @@ const schema = [
           <p class="price np">Price not published</p>
         )}
         <p class="muted">Listed by {p.brand} on the date checked. Prices change often.</p>
-        <a class={`btn ${isPlunge ? 'btn-cold' : 'btn-heat'}`} href={p.source} rel="nofollow noopener" target="_blank" data-track="brand_click" data-brand={p.brand} data-model={p.model} data-product-type={isPlunge ? 'cold_plunge' : 'sauna'} data-page-type="product" data-link-location="price_button">Check current price at {p.brand}</a>
+        <a class={`btn ${isPlunge ? 'btn-cold' : 'btn-heat'}`} href={buyUrl} rel={buyRel} target="_blank" data-track="brand_click" data-brand={p.brand} data-model={p.model} data-product-type={isPlunge ? 'cold_plunge' : 'sauna'} data-page-type="product" data-link-location="price_button" data-affiliate={p.affiliateUrl ? 'yes' : 'no'}>Check current price at {p.brand}</a>
       </div>
     </div>
 

@@ -88,6 +88,7 @@ const here = Astro.url.pathname;
           product_type: a.dataset.productType,
           page_type: a.dataset.pageType,
           link_location: a.dataset.linkLocation,
+          affiliate: a.dataset.affiliate || 'no',
           link_url: a.href,
           transport_type: 'beacon'
         });

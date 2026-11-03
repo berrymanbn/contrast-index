@@ -90,6 +90,7 @@ export function getColdPlunges() {
       dedicated: /dedicated/i.test(elec || ''),
       hasChiller: !/tub only/i.test(type),
       source: r['Spec source URL'],
+      affiliateUrl: r['Affiliate URL'] || null,
       checked: r['Date checked'],
       notes: r['Notes & conflicts'],
     };
@@ -142,6 +143,7 @@ export function getSaunas() {
       standardOutlet,
       hardwired,
       source: r['Spec source URL'],
+      affiliateUrl: r['Affiliate URL'] || null,
       checked: r['Date checked'],
       notes: r['Notes & conflicts'],
     };
