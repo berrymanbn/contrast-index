@@ -37,7 +37,7 @@ const schema = {
     <div class="prose">
       <h2>Check your ceiling first</h2>
       <p>Indoor cabins in the index stand {Math.min(...heights)} to {Math.max(...heights)} inches tall ({(Math.min(...heights) / 12).toFixed(1)} to {(Math.max(...heights) / 12).toFixed(1)} feet). A standard 8-foot ceiling is 96 inches, which leaves room for most of them, but basements and sloped ceilings can be tighter. Brands also call for clearance above and around the cabin, so check the owner's manual before you measure.</p>
-      <p>{indoorTrad.length === 0 ? 'Every indoor model in the index is infrared.' : `${indoor.length - indoorTrad.length} of the ${indoor.length} indoor models are infrared. The traditional ${indoorTrad.length === 1 ? 'one' : 'ones'} (${indoorTrad.map((s) => s.name).join(', ')}) ${indoorTrad.length === 1 ? 'needs' : 'need'} a hardwired 240V heater, so plan on an electrician.`} Compare the two in <a href="/guides/infrared-vs-traditional-sauna/">infrared vs traditional</a>.</p>
+      <p>{indoorTrad.length === 0 ? 'Every indoor model in the index is infrared.' : `${indoor.length - indoorTrad.length} of the ${indoor.length} indoor models are infrared. The traditional ${indoorTrad.length === 1 ? 'one' : 'ones'} (${indoorTrad.map((s) => s.name).join(', ')}) ${indoorTrad.length === 1 ? 'is' : 'are'} hardwired by an electrician on a dedicated circuit.`} Compare the two in <a href="/guides/infrared-vs-traditional-sauna/">infrared vs traditional</a>.</p>
     </div>
 
     {groups.map((g) => {
